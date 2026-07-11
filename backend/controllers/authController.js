@@ -5,6 +5,7 @@ const {
   getAuthenticatedUser,
 } = require('../services/githubAuthService');
 const { upsertUser } = require('../services/userService');
+const { saveCredential } = require('../services/githubCredentialService');
 
 const saveSession = (req) =>
   new Promise((resolve, reject) => req.session.save((error) => (error ? reject(error) : resolve())));
@@ -51,6 +52,7 @@ const githubCallback = async (req, res) => {
   });
   const githubUser = await getAuthenticatedUser(accessToken);
   const databaseUser = await upsertUser(githubUser);
+  await saveCredential(databaseUser.id, accessToken);
 
   await regenerateSession(req);
   req.session.user = {
