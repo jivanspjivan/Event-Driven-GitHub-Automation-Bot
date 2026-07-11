@@ -2,13 +2,18 @@ const {
   listRepositories,
   getRepository,
 } = require('../services/githubRepositoryService');
-
-const saveSession = (req) =>
-  new Promise((resolve, reject) => req.session.save((error) => (error ? reject(error) : resolve())));
+const {
+  getSelectedRepository,
+  saveSelectedRepository,
+  clearSelectedRepository,
+} = require('../services/repositorySelectionService');
 
 const getRepositories = async (req, res) => {
-  const repositories = await listRepositories(req.session.githubAccessToken);
-  res.status(200).json({ repositories, selectedRepository: req.session.selectedRepository || null });
+  const [repositories, selectedRepository] = await Promise.all([
+    listRepositories(req.session.githubAccessToken),
+    getSelectedRepository(req.session.user.databaseId),
+  ]);
+  res.status(200).json({ repositories, selectedRepository });
 };
 
 const selectRepository = async (req, res) => {
@@ -22,15 +27,13 @@ const selectRepository = async (req, res) => {
 
   // Fetching by ID verifies that the authenticated GitHub user can access it.
   const repository = await getRepository(req.session.githubAccessToken, repositoryId);
-  req.session.selectedRepository = repository;
-  await saveSession(req);
+  await saveSelectedRepository(req.session.user.databaseId, repository);
 
   return res.status(200).json({ selectedRepository: repository });
 };
 
 const clearRepositorySelection = async (req, res) => {
-  delete req.session.selectedRepository;
-  await saveSession(req);
+  await clearSelectedRepository(req.session.user.databaseId);
   res.status(204).send();
 };
 

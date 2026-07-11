@@ -77,8 +77,25 @@ GITHUB_CLIENT_ID=your-client-id
 GITHUB_CLIENT_SECRET=your-client-secret
 GITHUB_CALLBACK_URL=http://localhost:3001/api/auth/github/callback
 SESSION_SECRET=use-a-long-random-value
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/github_automation_bot
+DATABASE_SSL=false
 ```
+
+## PostgreSQL
+
+Create the database, set `DATABASE_URL` in the root `.env`, and apply the schema before starting
+the API:
+
+```bash
+createdb github_automation_bot
+npm run db:migrate
+npm run dev
+```
+
+The migration creates persistent users, repositories, repository selections, and sessions. Set
+`DATABASE_SSL=true` when the hosted PostgreSQL provider requires TLS.
 
 Open `http://localhost:3001/api/auth/github` in a browser to test login. A successful callback redirects to `http://localhost:3000/dashboard`.
 
-The current session store is suitable for local development only. Replace it with a persistent database or Redis-backed store before deploying multiple instances or using the app in production.
+GitHub access tokens are stored inside the server-side session. Use TLS for database connections
+and restrict database access in production.
