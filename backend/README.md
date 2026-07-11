@@ -110,6 +110,16 @@ Run `npm run db:migrate`, select a repository, and create a rule with
 `pull_request`, and `issues`. The initial `record_event` action records matched deliveries without
 changing the repository.
 
+To triage newly opened issues, create a rule with:
+
+```json
+{
+  "eventName": "issues",
+  "actionType": "triage_issue",
+  "configuration": { "label": "bug", "assignee": "developer-login" }
+}
+```
+
 In the selected repository's GitHub webhook settings, use the public URL
 `https://your-api.example/api/webhooks/github`, content type `application/json`, and the same secret
 as `GITHUB_WEBHOOK_SECRET`. Recent results are available from `GET /api/automations/deliveries`.

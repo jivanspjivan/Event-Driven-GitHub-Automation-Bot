@@ -1,5 +1,6 @@
 const pool = require('../db/pool');
 const { listDeliveries } = require('./webhookService');
+const { validateCreateRule } = require('./automationRuleValidation');
 
 const toRule = (row) => ({
   id: Number(row.id),
@@ -25,17 +26,17 @@ const listRules = async (userId) => {
   return result.rows.map(toRule);
 };
 
-const createRule = async (userId, { eventName, configuration }) => {
+const createRule = async (userId, { eventName, actionType, configuration }) => {
   try {
     const result = await pool.query(
       `INSERT INTO automation_rules (
          user_id, repository_id, event_name, action_type, configuration
        )
-       SELECT $1, repository_id, $2, 'record_event', $3
+       SELECT $1, repository_id, $2, $3, $4
          FROM user_repository_selections
         WHERE user_id = $1
        RETURNING *`,
-      [userId, eventName, configuration],
+      [userId, eventName, actionType, configuration],
     );
 
     if (result.rowCount === 0) {
@@ -47,13 +48,28 @@ const createRule = async (userId, { eventName, configuration }) => {
   } catch (error) {
     if (error.code === '23505') {
       error.statusCode = 409;
-      error.message = `A ${eventName} rule already exists for the selected repository`;
+      error.message = `A ${eventName}/${actionType} rule already exists for the selected repository`;
     }
     throw error;
   }
 };
 
 const updateRule = async (userId, ruleId, { enabled, configuration }) => {
+  const existingResult = await pool.query(
+    'SELECT * FROM automation_rules WHERE id = $1 AND user_id = $2',
+    [ruleId, userId],
+  );
+  const existingRule = existingResult.rows[0];
+  if (!existingRule) return null;
+
+  const validatedConfiguration =
+    configuration === undefined
+      ? undefined
+      : validateCreateRule({
+          eventName: existingRule.event_name,
+          actionType: existingRule.action_type,
+          configuration,
+        }).configuration;
   const result = await pool.query(
     `UPDATE automation_rules
         SET enabled = COALESCE($3, enabled),
@@ -61,7 +77,7 @@ const updateRule = async (userId, ruleId, { enabled, configuration }) => {
             updated_at = NOW()
       WHERE id = $1 AND user_id = $2
       RETURNING *`,
-    [ruleId, userId, enabled, configuration],
+    [ruleId, userId, enabled, validatedConfiguration],
   );
   return result.rows[0] ? toRule(result.rows[0]) : null;
 };

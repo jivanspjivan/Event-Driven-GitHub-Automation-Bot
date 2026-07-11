@@ -1,7 +1,9 @@
 const automationRuleService = require('../services/automationRuleService');
 const logger = require('../config/logger');
-
-const SUPPORTED_EVENTS = new Set(['push', 'pull_request', 'issues']);
+const {
+  validateConfigurationObject,
+  validateCreateRule,
+} = require('../services/automationRuleValidation');
 
 const parseRuleId = (value) => {
   const ruleId = Number(value);
@@ -11,16 +13,6 @@ const parseRuleId = (value) => {
     throw error;
   }
   return ruleId;
-};
-
-const validateConfiguration = (configuration) => {
-  if (configuration === undefined) return {};
-  if (!configuration || Array.isArray(configuration) || typeof configuration !== 'object') {
-    const error = new Error('configuration must be a JSON object');
-    error.statusCode = 400;
-    throw error;
-  }
-  return configuration;
 };
 
 const getRules = async (req, res) => {
@@ -42,18 +34,8 @@ const getDeliveries = async (req, res) => {
 };
 
 const createRule = async (req, res) => {
-  const eventName = String(req.body.eventName || '').trim();
-  if (!SUPPORTED_EVENTS.has(eventName)) {
-    return res.status(400).json({
-      status: 'error',
-      message: `eventName must be one of: ${[...SUPPORTED_EVENTS].join(', ')}`,
-    });
-  }
-
-  const rule = await automationRuleService.createRule(req.session.user.databaseId, {
-    eventName,
-    configuration: validateConfiguration(req.body.configuration),
-  });
+  const input = validateCreateRule(req.body);
+  const rule = await automationRuleService.createRule(req.session.user.databaseId, input);
   logger.info('Automation rule created', {
     userId: req.session.user.databaseId,
     ruleId: rule.id,
@@ -79,7 +61,7 @@ const updateRule = async (req, res) => {
       configuration:
         req.body.configuration === undefined
           ? undefined
-          : validateConfiguration(req.body.configuration),
+          : validateConfigurationObject(req.body.configuration),
     },
   );
   if (!rule) return res.status(404).json({ status: 'error', message: 'Automation rule not found' });
