@@ -79,6 +79,9 @@ GITHUB_CALLBACK_URL=http://localhost:3001/api/auth/github/callback
 SESSION_SECRET=use-a-long-random-value
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/github_automation_bot
 DATABASE_SSL=false
+GITHUB_WEBHOOK_SECRET=replace-with-a-random-webhook-secret
+LOG_LEVEL=debug
+TOKEN_ENCRYPTION_KEY=replace-with-64-hexadecimal-characters
 ```
 
 ## PostgreSQL
@@ -99,3 +102,35 @@ Open `http://localhost:3001/api/auth/github` in a browser to test login. A succe
 
 GitHub access tokens are stored inside the server-side session. Use TLS for database connections
 and restrict database access in production.
+
+## Webhook automation
+
+Run `npm run db:migrate`, select a repository, and create a rule with
+`POST /api/automations` using `{ "eventName": "push" }`. Supported events are `push`,
+`pull_request`, and `issues`. The initial `record_event` action records matched deliveries without
+changing the repository.
+
+To triage newly opened issues, create a rule with:
+
+```json
+{
+  "eventName": "issues",
+  "actionType": "triage_issue",
+  "configuration": { "label": "bug", "assignee": "developer-login" }
+}
+```
+
+The rule runs only for the GitHub `issues.opened` action. It verifies that the configured user can
+be assigned, adds the label without removing existing labels, adds the assignee without removing
+existing assignees, and records the outcome in `webhook_deliveries`.
+
+In the selected repository's GitHub webhook settings, use the public URL
+`https://your-api.example/api/webhooks/github`, content type `application/json`, and the same secret
+as `GITHUB_WEBHOOK_SECRET`. Recent results are available from `GET /api/automations/deliveries`.
+
+## Logging
+
+Winston writes structured application logs to the console. Every HTTP request receives an
+`X-Trace-Id` response header, and its start, completion, duration, webhook processing, and errors
+use the same trace ID. Set `LOG_LEVEL=debug` locally or `LOG_LEVEL=info` in production. Request
+bodies, authorization headers, cookies, GitHub tokens, and webhook payloads are not logged.
