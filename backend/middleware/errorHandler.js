@@ -11,6 +11,7 @@ const errorHandler = (err, req, res, next) => {
 
   const response = {
     status: 'error',
+    traceId: req.traceId,
     message:
       statusCode === 500 && process.env.NODE_ENV === 'production'
         ? 'Internal server error'
@@ -19,6 +20,17 @@ const errorHandler = (err, req, res, next) => {
 
   if (process.env.NODE_ENV !== 'production' && err.stack) {
     response.stack = err.stack;
+  }
+
+  const requestLog = req.log;
+  if (requestLog) {
+    requestLog.error('Request failed', {
+      method: req.method,
+      path: req.originalUrl,
+      statusCode,
+      errorMessage: err.message,
+      stack: err.stack,
+    });
   }
 
   res.status(statusCode).json(response);

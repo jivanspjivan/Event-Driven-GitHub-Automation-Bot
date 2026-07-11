@@ -22,6 +22,14 @@ const receiveGitHubWebhook = async (req, res) => {
   }
 
   const result = await processDelivery({ deliveryId, eventName, payload });
+  req.log.info('GitHub webhook processed', {
+    deliveryId,
+    eventName,
+    repositoryId: payload.repository?.id,
+    duplicate: result.duplicate,
+    matchedRuleCount: result.matchedRuleCount,
+    processingStatus: result.status || 'duplicate',
+  });
   return res.status(202).json({ status: result.duplicate ? 'duplicate' : result.status, ...result });
 };
 

@@ -8,10 +8,12 @@ const authRoutes = require('./routes/authRoutes');
 const repositoryRoutes = require('./routes/repositoryRoutes');
 const automationRoutes = require('./routes/automationRoutes');
 const webhookRoutes = require('./routes/webhookRoutes');
+const requestLogger = require('./middleware/requestLogger');
 
 const app = express();
 
 app.use(helmet());
+app.use(requestLogger);
 app.use(
   cors({
     origin: process.env.FRONTEND_URL,
