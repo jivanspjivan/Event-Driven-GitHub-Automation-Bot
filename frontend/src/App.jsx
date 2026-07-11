@@ -15,41 +15,8 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { API_URL, apiRequest, getCurrentUser } from './api';
 
-// In development Vite proxies /api to the backend. Deployments can override this
-// with VITE_API_URL when the API is hosted on a separate origin.
-const API_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
-
-async function getCurrentUser() {
-  const response = await fetch(`${API_URL}/api/auth/me`, { credentials: 'include' });
-  if (response.status === 401) return null;
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new Error(body.message || 'Could not check your GitHub session.');
-  }
-
-  const body = await response.json();
-  return body.user;
-}
-
-async function apiRequest(path, options = {}) {
-  const response = await fetch(`${API_URL}${path}`, {
-    credentials: 'include',
-    ...options,
-    headers: {
-      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
-      ...options.headers,
-    },
-  });
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new Error(body.message || 'Something went wrong. Please try again.');
-  }
-
-  return response.status === 204 ? null : response.json();
-}
 
 function GitHubIcon({ size = 22 }) {
   return (
