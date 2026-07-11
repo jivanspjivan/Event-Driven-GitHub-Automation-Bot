@@ -23,6 +23,6 @@ test('adds one trace ID to the request and response', () => {
   assert.equal(nextCalled, true);
   assert.match(req.traceId, /^[0-9a-f-]{36}$/);
   assert.equal(res.headers['X-Trace-Id'], req.traceId);
-  assert.ok(req.log);
+  assert.equal(req.log, undefined);
   logger.silent = false;
 });

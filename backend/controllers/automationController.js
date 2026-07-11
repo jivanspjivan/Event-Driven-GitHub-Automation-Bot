@@ -1,4 +1,5 @@
 const automationRuleService = require('../services/automationRuleService');
+const logger = require('../config/logger');
 
 const SUPPORTED_EVENTS = new Set(['push', 'pull_request', 'issues']);
 
@@ -24,11 +25,19 @@ const validateConfiguration = (configuration) => {
 
 const getRules = async (req, res) => {
   const rules = await automationRuleService.listRules(req.session.user.databaseId);
+  logger.info('Automation rules listed', {
+    userId: req.session.user.databaseId,
+    ruleCount: rules.length,
+  });
   res.status(200).json({ rules });
 };
 
 const getDeliveries = async (req, res) => {
   const deliveries = await automationRuleService.listDeliveries(req.session.user.databaseId);
+  logger.info('Automation deliveries listed', {
+    userId: req.session.user.databaseId,
+    deliveryCount: deliveries.length,
+  });
   res.status(200).json({ deliveries });
 };
 
@@ -44,6 +53,12 @@ const createRule = async (req, res) => {
   const rule = await automationRuleService.createRule(req.session.user.databaseId, {
     eventName,
     configuration: validateConfiguration(req.body.configuration),
+  });
+  logger.info('Automation rule created', {
+    userId: req.session.user.databaseId,
+    ruleId: rule.id,
+    eventName: rule.eventName,
+    actionType: rule.actionType,
   });
   return res.status(201).json({ rule });
 };
@@ -68,6 +83,12 @@ const updateRule = async (req, res) => {
     },
   );
   if (!rule) return res.status(404).json({ status: 'error', message: 'Automation rule not found' });
+  logger.info('Automation rule updated', {
+    userId: req.session.user.databaseId,
+    ruleId: rule.id,
+    enabled: rule.enabled,
+    actionType: rule.actionType,
+  });
   return res.status(200).json({ rule });
 };
 
@@ -79,6 +100,10 @@ const deleteRule = async (req, res) => {
   if (!deleted) {
     return res.status(404).json({ status: 'error', message: 'Automation rule not found' });
   }
+  logger.info('Automation rule deleted', {
+    userId: req.session.user.databaseId,
+    ruleId: parseRuleId(req.params.ruleId),
+  });
   return res.status(204).send();
 };
 

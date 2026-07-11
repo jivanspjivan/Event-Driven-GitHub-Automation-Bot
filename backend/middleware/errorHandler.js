@@ -1,3 +1,5 @@
+const logger = require('../config/logger');
+
 const errorHandler = (err, req, res, next) => {
   if (res.headersSent) {
     return next(err);
@@ -22,16 +24,13 @@ const errorHandler = (err, req, res, next) => {
     response.stack = err.stack;
   }
 
-  const requestLog = req.log;
-  if (requestLog) {
-    requestLog.error('Request failed', {
-      method: req.method,
-      path: req.originalUrl,
-      statusCode,
-      errorMessage: err.message,
-      stack: err.stack,
-    });
-  }
+  logger.error('Request failed', {
+    method: req.method,
+    path: req.originalUrl,
+    statusCode,
+    errorMessage: err.message,
+    stack: err.stack,
+  });
 
   res.status(statusCode).json(response);
 };

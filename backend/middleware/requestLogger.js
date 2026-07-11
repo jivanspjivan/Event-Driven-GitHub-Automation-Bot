@@ -7,36 +7,37 @@ const requestLogger = (req, res, next) => {
   const startedAtNs = process.hrtime.bigint();
 
   req.traceId = traceId;
-  req.log = logger.child({ traceId });
   res.setHeader('X-Trace-Id', traceId);
 
-  req.log.info('Request started', {
-    method: req.method,
-    path: req.originalUrl,
-    startedAt: startedAt.toISOString(),
-  });
-
-  res.once('finish', () => {
-    const durationMs = Number(process.hrtime.bigint() - startedAtNs) / 1e6;
-    req.log.info('Request completed', {
+  logger.withContext({ traceId }, () => {
+    logger.info('Request started', {
       method: req.method,
       path: req.originalUrl,
-      statusCode: res.statusCode,
-      durationMs: Number(durationMs.toFixed(2)),
+      startedAt: startedAt.toISOString(),
     });
-  });
 
-  res.once('close', () => {
-    if (res.writableEnded) return;
-    const durationMs = Number(process.hrtime.bigint() - startedAtNs) / 1e6;
-    req.log.warn('Request connection closed before completion', {
-      method: req.method,
-      path: req.originalUrl,
-      durationMs: Number(durationMs.toFixed(2)),
+    res.once('finish', () => {
+      const durationMs = Number(process.hrtime.bigint() - startedAtNs) / 1e6;
+      logger.info('Request completed', {
+        method: req.method,
+        path: req.originalUrl,
+        statusCode: res.statusCode,
+        durationMs: Number(durationMs.toFixed(2)),
+      });
     });
-  });
 
-  next();
+    res.once('close', () => {
+      if (res.writableEnded) return;
+      const durationMs = Number(process.hrtime.bigint() - startedAtNs) / 1e6;
+      logger.warn('Request connection closed before completion', {
+        method: req.method,
+        path: req.originalUrl,
+        durationMs: Number(durationMs.toFixed(2)),
+      });
+    });
+
+    next();
+  });
 };
 
 module.exports = requestLogger;
