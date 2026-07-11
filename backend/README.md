@@ -120,6 +120,10 @@ To triage newly opened issues, create a rule with:
 }
 ```
 
+The rule runs only for the GitHub `issues.opened` action. It verifies that the configured user can
+be assigned, adds the label without removing existing labels, adds the assignee without removing
+existing assignees, and records the outcome in `webhook_deliveries`.
+
 In the selected repository's GitHub webhook settings, use the public URL
 `https://your-api.example/api/webhooks/github`, content type `application/json`, and the same secret
 as `GITHUB_WEBHOOK_SECRET`. Recent results are available from `GET /api/automations/deliveries`.
