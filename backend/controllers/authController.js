@@ -4,6 +4,7 @@ const {
   exchangeCodeForToken,
   getAuthenticatedUser,
 } = require('../services/githubAuthService');
+const { upsertUser } = require('../services/userService');
 
 const saveSession = (req) =>
   new Promise((resolve, reject) => req.session.save((error) => (error ? reject(error) : resolve())));
@@ -49,9 +50,11 @@ const githubCallback = async (req, res) => {
     code,
   });
   const githubUser = await getAuthenticatedUser(accessToken);
+  const databaseUser = await upsertUser(githubUser);
 
   await regenerateSession(req);
   req.session.user = {
+    databaseId: databaseUser.id,
     id: githubUser.id,
     login: githubUser.login,
     name: githubUser.name,
