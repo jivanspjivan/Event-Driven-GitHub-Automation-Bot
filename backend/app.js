@@ -5,6 +5,7 @@ const sessionMiddleware = require('./middleware/session');
 const notFound = require('./middleware/notFound');
 const errorHandler = require('./middleware/errorHandler');
 const authRoutes = require('./routes/authRoutes');
+const repositoryRoutes = require('./routes/repositoryRoutes');
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/repositories', repositoryRoutes);
 
 // Error middleware must be registered after all application routes.
 app.use(notFound);

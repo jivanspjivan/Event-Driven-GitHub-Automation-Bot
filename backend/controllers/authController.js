@@ -27,6 +27,7 @@ const githubLogin = async (req, res) => {
   authorizationUrl.searchParams.set('client_id', clientId);
   authorizationUrl.searchParams.set('redirect_uri', required('GITHUB_CALLBACK_URL'));
   authorizationUrl.searchParams.set('state', state);
+  authorizationUrl.searchParams.set('scope', 'read:user repo');
 
   res.redirect(authorizationUrl.toString());
 };
