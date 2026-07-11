@@ -54,6 +54,15 @@ The backend implements GitHub's OAuth web flow with these routes:
 - `GET /api/auth/me` returns the logged-in user.
 - `POST /api/auth/logout` destroys the session.
 
+Authenticated repository routes:
+
+- `GET /api/repositories` returns repositories available to the signed-in user and the current selection.
+- `PUT /api/repositories/selection` selects a repository using `{ "repositoryId": 123 }`.
+- `DELETE /api/repositories/selection` clears the current selection.
+
+Repository access requests the `repo` OAuth scope so private repositories can be listed. Users
+with an older session must sign out and authorize the application again to grant this scope.
+
 Create a GitHub App in GitHub **Settings → Developer settings → GitHub Apps**. For local development, configure:
 
 ```text
