@@ -314,8 +314,174 @@ function AutomationRuleForm({ selectedRepository, defaultAssignee, onRuleCreated
   );
 }
 
+const deliveryColor = (status) => {
+  if (status === 'completed') return 'success';
+  if (status === 'failed') return 'error';
+  if (status === 'ignored') return 'default';
+  return 'warning';
+};
+
+function AutomationActivity({ selectedRepository, refreshVersion }) {
+  const [rules, setRules] = useState([]);
+  const [deliveries, setDeliveries] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [workingRuleId, setWorkingRuleId] = useState(null);
+  const [error, setError] = useState('');
+
+  const loadActivity = async () => {
+    if (!selectedRepository) {
+      setRules([]);
+      setDeliveries([]);
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const [rulesData, deliveriesData] = await Promise.all([
+        automationApi.listRules(),
+        automationApi.listDeliveries(),
+      ]);
+      setRules(rulesData.rules);
+      setDeliveries(deliveriesData.deliveries);
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadActivity();
+  }, [selectedRepository?.id, refreshVersion]);
+
+  const toggleRule = async (rule) => {
+    setWorkingRuleId(rule.id);
+    setError('');
+    try {
+      const data = await automationApi.updateRule(rule.id, { enabled: !rule.enabled });
+      setRules((current) => current.map((item) => (item.id === rule.id ? data.rule : item)));
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setWorkingRuleId(null);
+    }
+  };
+
+  const removeRule = async (rule) => {
+    if (!window.confirm(`Delete the ${rule.actionType} automation rule?`)) return;
+    setWorkingRuleId(rule.id);
+    setError('');
+    try {
+      await automationApi.deleteRule(rule.id);
+      setRules((current) => current.filter((item) => item.id !== rule.id));
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setWorkingRuleId(null);
+    }
+  };
+
+  if (!selectedRepository) return null;
+
+  return (
+    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 3, mt: 3 }}>
+      <Card>
+        <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
+            <Box>
+              <Typography component="h2" variant="h6" fontWeight={700}>Automation rules</Typography>
+              <Typography variant="body2" color="text.secondary">Rules for {selectedRepository.fullName}</Typography>
+            </Box>
+            <Button size="small" onClick={loadActivity} disabled={loading}>Refresh</Button>
+          </Stack>
+          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          {loading ? (
+            <Stack alignItems="center" py={4}><CircularProgress size={28} /></Stack>
+          ) : rules.length === 0 ? (
+            <Alert severity="info">No automation rules exist for this repository.</Alert>
+          ) : (
+            <Stack divider={<Divider flexItem />}>
+              {rules.map((rule) => (
+                <Box key={rule.id} sx={{ py: 2 }}>
+                  <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2}>
+                    <Box>
+                      <Stack direction="row" spacing={1} alignItems="center" mb={0.75}>
+                        <Typography fontWeight={700}>{rule.configuration.label || rule.actionType}</Typography>
+                        <Chip
+                          size="small"
+                          label={rule.enabled ? 'Enabled' : 'Disabled'}
+                          color={rule.enabled ? 'success' : 'default'}
+                        />
+                      </Stack>
+                      <Typography variant="body2" color="text.secondary">
+                        {rule.actionType === 'triage_issue'
+                          ? `New issue → assign @${rule.configuration.assignee}`
+                          : `${rule.eventName} → record event`} · action: {rule.actionType}
+                      </Typography>
+                    </Box>
+                    <Stack direction="row" spacing={1}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        disabled={workingRuleId !== null}
+                        onClick={() => toggleRule(rule)}
+                      >
+                        {rule.enabled ? 'Disable' : 'Enable'}
+                      </Button>
+                      <Button
+                        size="small"
+                        color="error"
+                        disabled={workingRuleId !== null}
+                        onClick={() => removeRule(rule)}
+                      >
+                        Delete
+                      </Button>
+                    </Stack>
+                  </Stack>
+                </Box>
+              ))}
+            </Stack>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
+          <Typography component="h2" variant="h6" fontWeight={700}>Recent webhook deliveries</Typography>
+          <Typography variant="body2" color="text.secondary" mb={2}>Latest automation outcomes for this repository</Typography>
+          {loading ? (
+            <Stack alignItems="center" py={4}><CircularProgress size={28} /></Stack>
+          ) : deliveries.length === 0 ? (
+            <Alert severity="info">No GitHub webhook deliveries have been recorded yet.</Alert>
+          ) : (
+            <Stack divider={<Divider flexItem />}>
+              {deliveries.map((delivery) => (
+                <Box key={delivery.deliveryId} sx={{ py: 2 }}>
+                  <Stack direction="row" justifyContent="space-between" spacing={2} mb={0.75}>
+                    <Typography fontWeight={700}>{delivery.eventName}.{delivery.actionName || 'event'}</Typography>
+                    <Chip size="small" label={delivery.status} color={deliveryColor(delivery.status)} />
+                  </Stack>
+                  <Typography variant="body2" color="text.secondary">
+                    {delivery.executedActionCount} action(s) executed · {new Date(delivery.receivedAt).toLocaleString()}
+                  </Typography>
+                  {delivery.errorMessage && (
+                    <Typography variant="body2" color="error.main" sx={{ mt: 0.75, overflowWrap: 'anywhere' }}>
+                      {delivery.errorMessage}
+                    </Typography>
+                  )}
+                </Box>
+              ))}
+            </Stack>
+          )}
+        </CardContent>
+      </Card>
+    </Box>
+  );
+}
+
 function Dashboard({ user, onLogout, loggingOut, error }) {
   const [selectedRepository, setSelectedRepository] = useState(null);
+  const [automationRefreshVersion, setAutomationRefreshVersion] = useState(0);
 
   return (
     <PageShell>
@@ -358,6 +524,11 @@ function Dashboard({ user, onLogout, loggingOut, error }) {
         <AutomationRuleForm
           selectedRepository={selectedRepository}
           defaultAssignee={user.login}
+          onRuleCreated={() => setAutomationRefreshVersion((current) => current + 1)}
+        />
+        <AutomationActivity
+          selectedRepository={selectedRepository}
+          refreshVersion={automationRefreshVersion}
         />
       </Container>
     </PageShell>
