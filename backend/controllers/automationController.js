@@ -27,6 +27,11 @@ const getRules = async (req, res) => {
   res.status(200).json({ rules });
 };
 
+const getDeliveries = async (req, res) => {
+  const deliveries = await automationRuleService.listDeliveries(req.session.user.databaseId);
+  res.status(200).json({ deliveries });
+};
+
 const createRule = async (req, res) => {
   const eventName = String(req.body.eventName || '').trim();
   if (!SUPPORTED_EVENTS.has(eventName)) {
@@ -77,4 +82,4 @@ const deleteRule = async (req, res) => {
   return res.status(204).send();
 };
 
-module.exports = { getRules, createRule, updateRule, deleteRule };
+module.exports = { getRules, getDeliveries, createRule, updateRule, deleteRule };

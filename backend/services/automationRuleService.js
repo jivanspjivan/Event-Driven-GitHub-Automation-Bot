@@ -1,4 +1,5 @@
 const pool = require('../db/pool');
+const { listDeliveries } = require('./webhookService');
 
 const toRule = (row) => ({
   id: Number(row.id),
@@ -73,4 +74,4 @@ const deleteRule = async (userId, ruleId) => {
   return result.rowCount > 0;
 };
 
-module.exports = { listRules, createRule, updateRule, deleteRule };
+module.exports = { listRules, createRule, updateRule, deleteRule, listDeliveries };
