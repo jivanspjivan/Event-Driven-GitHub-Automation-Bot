@@ -12,17 +12,41 @@ export default function Dashboard({ user, onLogout, loggingOut, error }) {
   return (
     <PageShell>
       <Container maxWidth="lg">
-        <Stack component="nav" direction="row" alignItems="center" justifyContent="space-between" mb={5}>
-          <Link href="/dashboard" color="text.primary" underline="none"><Stack direction="row" alignItems="center" spacing={1.5}><BrandMark small /><Typography fontWeight={700}>Automation Bot</Typography></Stack></Link>
-          <Button variant="outlined" color="inherit" disabled={loggingOut} onClick={onLogout}>{loggingOut ? 'Signing out…' : 'Sign out'}</Button>
-        </Stack>
+        <Box component="nav" sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr auto', md: '1fr auto 1fr' }, alignItems: 'center', mb: 5 }}>
+          <Box sx={{ display: { xs: 'none', md: 'block' } }} />
+          <Link href="/dashboard" color="text.primary" underline="none" sx={{ justifySelf: { xs: 'start', md: 'center' } }}>
+            <Stack direction="row" alignItems="center" justifyContent="center" spacing={1.5}>
+              <BrandMark small />
+              <Typography component="span" fontWeight={800} sx={{ fontSize: { xs: '1.2rem', sm: '2rem' } }}>Automation Bot</Typography>
+            </Stack>
+          </Link>
+          <Button variant="contained" color="error" disabled={loggingOut} onClick={onLogout} sx={{ justifySelf: 'end' }}>
+            {loggingOut ? 'Signing out…' : 'Sign out'}
+          </Button>
+        </Box>
         {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 3 }}>
           <Card><CardContent sx={{ p: { xs: 3, md: 5 }, '&:last-child': { pb: { xs: 3, md: 5 } } }}>
-            <Chip label="Connected" color="success" size="small" sx={{ mb: 2 }} />
+            <Chip label="GitHub workspace" color="primary" size="small" sx={{ mb: 2 }} />
             <Typography component="h1" variant="h3" fontWeight={700} gutterBottom>Welcome, {user.name || user.login}</Typography>
-            <Typography variant="h6" color="text.secondary" fontWeight={400} mb={4}>Your GitHub OAuth flow is working and the backend session is active.</Typography>
-            <Box sx={{ bgcolor: 'grey.100', borderRadius: 3, p: 3 }}><Typography component="h2" variant="subtitle2" fontWeight={700} mb={2}>Flow status</Typography><Stack direction="row" alignItems="center" spacing={2}><Box sx={{ width: 12, height: 12, flexShrink: 0, bgcolor: 'success.main', borderRadius: '50%', boxShadow: '0 0 0 5px rgba(46, 125, 50, .12)' }} /><Box><Typography fontWeight={600}>Authentication complete</Typography><Typography variant="body2" color="text.secondary">Ready for GitHub and Slack automation</Typography></Box></Stack></Box>
+            <Typography variant="h6" color="text.secondary" fontWeight={400} mb={4}>
+              Automatically triage new GitHub issues, assign the right developer, notify Slack, and track every action from one dashboard.
+            </Typography>
+            <Box sx={{ bgcolor: 'grey.100', borderRadius: 3, p: 3 }}>
+              <Typography component="h2" variant="subtitle1" fontWeight={700} mb={2}>Get started</Typography>
+              <Stack spacing={1.5}>
+                {[
+                  'Select the GitHub repository you want to automate.',
+                  'Create a rule with an issue label and developer assignee.',
+                  'Open an issue and monitor GitHub, Slack, and retry results below.',
+                ].map((step, index) => (
+                  <Stack key={step} direction="row" alignItems="center" spacing={1.5}>
+                    <Chip label={index + 1} size="small" color="primary" />
+                    <Typography variant="body2">{step}</Typography>
+                  </Stack>
+                ))}
+              </Stack>
+            </Box>
           </CardContent></Card>
           <Card><CardContent sx={{ p: 3, textAlign: 'center' }}><Avatar src={user.avatarUrl} alt={`${user.login}'s avatar`} sx={{ width: 96, height: 96, mx: 'auto', mb: 2, boxShadow: '0 0 0 5px #eef2f7' }} /><Typography component="h2" variant="h6">{user.name || user.login}</Typography><Typography color="text.secondary" mb={3}>@{user.login}</Typography><Button component="a" href={user.profileUrl} target="_blank" rel="noreferrer" fullWidth variant="outlined" color="inherit">View GitHub profile</Button></CardContent></Card>
         </Box>
