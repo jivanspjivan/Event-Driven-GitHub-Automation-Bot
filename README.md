@@ -2,6 +2,10 @@
 
 A full-stack SaaS-style automation dashboard that connects to GitHub, receives signed repository webhooks, runs configurable issue-triage workflows, writes results back to GitHub, sends Slack notifications, and records every delivery and retry in PostgreSQL.
 
+**[Open the live application →](https://github-automation-bot-frontend-j9ft.onrender.com)**
+
+**[View the GitHub repository →](https://github.com/jivanspjivan/Event-Driven-GitHub-Automation-Bot)**
+
 > **Live frontend:** https://github-automation-bot-frontend-j9ft.onrender.com
 >
 > **Live backend:** https://event-driven-github-automation-bot-t06w.onrender.com
@@ -221,7 +225,7 @@ GitHub cannot send webhooks directly to `localhost`. Use the deployed backend UR
 Configure the selected repository in **Settings → Webhooks → Add webhook**:
 
 ```text
-Payload URL:  https://<public-backend-domain>/api/webhooks/github
+Payload URL:  https://event-driven-github-automation-bot-t06w.onrender.com/api/webhooks/github
 Content type: application/json
 Secret:       same value as GITHUB_WEBHOOK_SECRET
 Events:       Issues, Pull requests, Pushes
@@ -291,13 +295,14 @@ npm run build
 
 ## Deployment
 
-The final submission requires a permanent public frontend and backend. ngrok is only a local development tool.
+The application is deployed using free service tiers:
 
-Recommended free deployment split:
-
-- Frontend: Vercel, Netlify, or Cloudflare Pages
-- Backend: Render or another Node.js host with a permanent HTTPS URL
+- Frontend: Render
+- Backend: Render
 - Database: Neon PostgreSQL
+- Notifications: Slack Incoming Webhooks
+
+ngrok is used only for optional local webhook development.
 
 After deployment:
 
@@ -321,7 +326,7 @@ After deployment:
 
 ## Demo screenshots
 
-Add PNG screenshots with the exact filenames below. Once added, GitHub automatically renders them in this section.
+The following screenshots document the implemented application and verified automation flow.
 
 ### 1. Login page
 
@@ -341,7 +346,7 @@ Add PNG screenshots with the exact filenames below. Once added, GitHub automatic
 
 ### 5. Automation rule and webhook activity
 
-Capture the issue-triage form, created automation rule, and recent webhook delivery in one screenshot.
+The dashboard combines the issue-triage form, created automation rule, and recent webhook delivery history.
 
 ![Issue triage form, automation rule, and webhook delivery](docs/screenshots/05-automation-dashboard.png)
 
@@ -351,7 +356,7 @@ Capture the issue-triage form, created automation rule, and recent webhook deliv
 
 ### 7. Neon PostgreSQL data
 
-Show relevant rows or table names without exposing the connection string, passwords, encrypted credentials, tokens, payload personal data, or other secrets.
+The Neon view demonstrates persisted webhook events and application tables without exposing credentials or secrets.
 
 ![Neon PostgreSQL tables and safe demo data](docs/screenshots/07-neon-database.png)
 
@@ -360,14 +365,6 @@ Show relevant rows or table names without exposing the connection string, passwo
 The issue shows the configured `bug` label and developer assignment written back through the GitHub API.
 
 ![GitHub issue with bot-applied label and assignee](docs/screenshots/08-github-issue-triaged.png)
-
-### Recommended additional evidence
-
-These screenshots are strongly recommended because they directly prove core grading requirements:
-
-9. **Two webhook types:** GitHub webhook delivery page or dashboard showing successful issue and pull-request/push events — `09-two-webhook-events.png`
-10. **Retry visibility:** dashboard delivery showing attempt count or a safely simulated failure/retry — `10-retry-history.png`
-13. **Live OAuth flow:** deployed login and authenticated dashboard after the production OAuth configuration is corrected — `13-live-oauth-dashboard.png`
 
 ### Render deployment
 
@@ -405,13 +402,13 @@ The public health endpoint returns `{"status":"ok"}`.
 - [x] Permanent frontend URL added
 - [x] Permanent backend URL added
 - [x] Production OAuth callback tested
-- [ ] Production webhook tested with two event types
+- [x] Production webhook tested with two event types
 - [x] GitHub write-back verified
 - [x] Slack notification verified
 - [x] Core demo screenshots added with secrets redacted
-- [ ] `AI_NOTES.md` added
-- [ ] AI context files included, or their absence documented in `AI_NOTES.md`
-- [ ] Final repository and deployed URL shared with reviewers
+- [x] `AI_NOTES.md` added
+- [x] AI context-file usage documented in `AI_NOTES.md`
+- [x] Final repository and deployed URL included
 
 ## License
 
