@@ -62,6 +62,9 @@ const githubCallback = async (req, res) => {
     name: githubUser.name,
     avatarUrl: githubUser.avatar_url,
     profileUrl: githubUser.html_url,
+    publicRepositories: githubUser.public_repos,
+    followers: githubUser.followers,
+    following: githubUser.following,
   };
   req.session.githubAccessToken = accessToken;
   await saveSession(req);
@@ -69,8 +72,29 @@ const githubCallback = async (req, res) => {
   res.redirect(`${required('FRONTEND_URL').replace(/\/$/, '')}/dashboard`);
 };
 
-const getCurrentUser = (req, res) => {
-  res.status(200).json({ user: req.session.user });
+const getCurrentUser = async (req, res) => {
+  const hasProfileStats = ['publicRepositories', 'followers', 'following']
+    .every((field) => Number.isInteger(req.session.user[field]));
+  if (!hasProfileStats) {
+    const githubUser = await getAuthenticatedUser(req.session.githubAccessToken);
+    req.session.user = {
+      ...req.session.user,
+      name: githubUser.name,
+      avatarUrl: githubUser.avatar_url,
+      profileUrl: githubUser.html_url,
+      publicRepositories: githubUser.public_repos,
+      followers: githubUser.followers,
+      following: githubUser.following,
+    };
+    await saveSession(req);
+  }
+  res.status(200).json({
+    user: {
+      ...req.session.user,
+      githubConnected: true,
+      slackConnected: Boolean(process.env.SLACK_WEBHOOK_URL?.trim()),
+    },
+  });
 };
 
 const logout = async (req, res) => {
