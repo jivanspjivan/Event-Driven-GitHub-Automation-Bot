@@ -82,6 +82,7 @@ DATABASE_SSL=false
 GITHUB_WEBHOOK_SECRET=replace-with-a-random-webhook-secret
 LOG_LEVEL=debug
 TOKEN_ENCRYPTION_KEY=replace-with-64-hexadecimal-characters
+SLACK_WEBHOOK_URL=https://hooks.slack.com/services/replace/with/your-webhook
 ```
 
 ## PostgreSQL
@@ -123,6 +124,11 @@ To triage newly opened issues, create a rule with:
 The rule runs only for the GitHub `issues.opened` action. It verifies that the configured user can
 be assigned, adds the label without removing existing labels, adds the assignee without removing
 existing assignees, and records the outcome in `webhook_deliveries`.
+
+Create a Slack app, enable Incoming Webhooks, add a webhook to a test channel, and store its URL in
+`SLACK_WEBHOOK_URL`. The URL is a secret: keep it only in the root `.env` locally and in protected
+environment variables when deployed. A successful issue triage posts the issue, repository,
+reporter, label, and assignee to that Slack channel.
 
 In the selected repository's GitHub webhook settings, use the public URL
 `https://your-api.example/api/webhooks/github`, content type `application/json`, and the same secret
