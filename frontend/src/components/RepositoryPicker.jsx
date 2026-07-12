@@ -8,7 +8,7 @@ export default function RepositoryPicker({ onSelectionChange }) {
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState({ page: 1, pageSize: 10, totalItems: 0, totalPages: 1 });
+  const [pagination, setPagination] = useState({ page: 1, pageSize: 5, totalItems: 0, totalPages: 1 });
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState(null);
   const [error, setError] = useState('');
@@ -19,7 +19,7 @@ export default function RepositoryPicker({ onSelectionChange }) {
     try {
       const params = new URLSearchParams({
         page: String(page),
-        pageSize: '10',
+        pageSize: '5',
         search: debouncedQuery,
       });
       if (bypassCache) params.set('refresh', 'true');
