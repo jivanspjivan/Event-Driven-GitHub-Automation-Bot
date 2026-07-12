@@ -1,6 +1,6 @@
 # Demo screenshot guide
 
-Add the following PNG files to this directory. The root README already references these exact names.
+The following screenshots are included and referenced by the root README.
 
 ```text
 01-login-page.png
@@ -11,11 +11,8 @@ Add the following PNG files to this directory. The root README already reference
 06-slack-notification.png
 07-neon-database.png
 08-github-issue-triaged.png
-09-two-webhook-events.png          # recommended
-10-retry-history.png               # recommended
 11-live-deployment.png
 12-backend-health.png
-13-live-oauth-dashboard.png        # recommended after OAuth configuration
 ```
 
 ## Capture guidance
