@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Divider, Link, Pagination, Stack, TextField, Typography } from '@mui/material';
 import { apiRequest } from '../api';
+import formatRepositoryName from '../utils/formatRepositoryName';
 
 const repositoryButtonSx = (isSelected) =>
   isSelected
@@ -121,7 +122,7 @@ export default function RepositoryPicker({ onSelectionChange }) {
                   <Stack key={repository.id} direction={{ xs: 'column', sm: 'row' }} alignItems={{ sm: 'center' }} justifyContent="space-between" spacing={2} sx={{ py: 2.5 }}>
                     <Box sx={{ minWidth: 0, flex: 1, pr: { sm: 2 } }}>
                       <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
-                        <Typography fontWeight={700} sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{repository.name}</Typography>
+                        <Typography fontWeight={700} sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{formatRepositoryName(repository.name)}</Typography>
                         <Stack direction="row" spacing={1} sx={{ display: { xs: 'flex', sm: 'none' }, flexShrink: 0 }}>
                           <Link href={repository.htmlUrl} target="_blank" rel="noreferrer" variant="body2" fontWeight={700} underline="hover">Open ↗</Link>
                           <Chip label={repository.private ? 'Private' : 'Public'} size="small" variant="outlined" />
