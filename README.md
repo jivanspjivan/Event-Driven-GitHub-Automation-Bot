@@ -2,7 +2,11 @@
 
 A full-stack SaaS-style automation dashboard that connects to GitHub, receives signed repository webhooks, runs configurable issue-triage workflows, writes results back to GitHub, sends Slack notifications, and records every delivery and retry in PostgreSQL.
 
-> **Deployment status:** Add the production frontend URL here after deployment: `https://<your-frontend-domain>`
+> **Live frontend:** https://github-automation-bot-frontend-j9ft.onrender.com
+>
+> **Live backend:** https://event-driven-github-automation-bot-t06w.onrender.com
+>
+> Both services are publicly reachable on Render. Production OAuth environment variables still need to be updated from localhost before the deployed sign-in flow is ready.
 
 ## Features
 
@@ -308,10 +312,10 @@ After deployment:
 
 | Service | URL |
 | --- | --- |
-| Frontend | `https://<add-frontend-url>` |
-| Backend | `https://<add-backend-url>` |
-| Health check | `https://<add-backend-url>/health` |
-| GitHub webhook | `https://<add-backend-url>/api/webhooks/github` |
+| Frontend | https://github-automation-bot-frontend-j9ft.onrender.com |
+| Backend | https://event-driven-github-automation-bot-t06w.onrender.com |
+| Health check | https://event-driven-github-automation-bot-t06w.onrender.com/health |
+| GitHub webhook | https://event-driven-github-automation-bot-t06w.onrender.com/api/webhooks/github |
 
 ## Demo screenshots
 
@@ -361,7 +365,19 @@ These screenshots are strongly recommended because they directly prove core grad
 
 9. **Two webhook types:** GitHub webhook delivery page or dashboard showing successful issue and pull-request/push events — `09-two-webhook-events.png`
 10. **Retry visibility:** dashboard delivery showing attempt count or a safely simulated failure/retry — `10-retry-history.png`
-11. **Live deployment:** deployed application and backend health response — `11-live-deployment.png`
+13. **Live OAuth flow:** deployed login and authenticated dashboard after the production OAuth configuration is corrected — `13-live-oauth-dashboard.png`
+
+### Render deployment
+
+The backend service is deployed and running on Render's free tier.
+
+![Live backend deployment on Render](docs/screenshots/11-live-deployment.png)
+
+### Backend health check
+
+The public health endpoint returns `{"status":"ok"}`.
+
+![Public backend health response](docs/screenshots/12-backend-health.png)
 
 ## API summary
 
@@ -384,8 +400,8 @@ These screenshots are strongly recommended because they directly prove core grad
 
 ## Submission checklist
 
-- [ ] Permanent frontend URL added
-- [ ] Permanent backend URL added
+- [x] Permanent frontend URL added
+- [x] Permanent backend URL added
 - [ ] Production OAuth callback tested
 - [ ] Production webhook tested with two event types
 - [x] GitHub write-back verified
