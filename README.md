@@ -6,7 +6,9 @@ A full-stack SaaS-style automation dashboard that connects to GitHub, receives s
 >
 > **Live backend:** https://event-driven-github-automation-bot-t06w.onrender.com
 >
-> Both services are publicly reachable on Render. Production OAuth environment variables still need to be updated from localhost before the deployed sign-in flow is ready.
+> Both services are publicly reachable on Render. GitHub OAuth, repository selection, issue triage, GitHub label and assignee write-back, and Slack notification have been verified in production.
+>
+> The frontend and backend currently use different Render domains. Browsers that block third-party cookies must allow them for `onrender.com` during demo testing so the backend session cookie can be sent.
 
 ## Features
 
@@ -402,7 +404,7 @@ The public health endpoint returns `{"status":"ok"}`.
 
 - [x] Permanent frontend URL added
 - [x] Permanent backend URL added
-- [ ] Production OAuth callback tested
+- [x] Production OAuth callback tested
 - [ ] Production webhook tested with two event types
 - [x] GitHub write-back verified
 - [x] Slack notification verified
