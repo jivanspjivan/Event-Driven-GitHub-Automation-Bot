@@ -100,15 +100,24 @@ export default function RepositoryPicker({ onSelectionChange }) {
                 const permission = repository.permissions?.admin ? 'Admin' : repository.permissions?.push ? 'Write' : 'Read';
                 return (
                   <Stack key={repository.id} direction={{ xs: 'column', sm: 'row' }} alignItems={{ sm: 'center' }} justifyContent="space-between" spacing={2} sx={{ py: 2.5 }}>
-                    <Box sx={{ minWidth: 0 }}>
+                    <Box sx={{ minWidth: 0, flex: 1, pr: { sm: 2 } }}>
                       <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
                         <Link href={repository.htmlUrl} target="_blank" rel="noreferrer" fontWeight={700} underline="hover" sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{repository.fullName}</Link>
-                        <Chip label={repository.private ? 'Private' : 'Public'} size="small" variant="outlined" />
-                        <Chip label={permission} size="small" color={permission === 'Read' ? 'default' : 'primary'} variant="outlined" />
+                        <Stack direction="row" spacing={1} sx={{ display: { xs: 'flex', sm: 'none' }, flexShrink: 0 }}>
+                          <Chip label={repository.private ? 'Private' : 'Public'} size="small" variant="outlined" />
+                          <Chip label={permission} size="small" color={permission === 'Read' ? 'default' : 'primary'} variant="outlined" />
+                        </Stack>
                       </Stack>
                       <Typography variant="body2" color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>{repository.description || 'No description'} · {repository.defaultBranch}</Typography>
                     </Box>
-                    <Button variant={isSelected ? 'contained' : 'outlined'} color={isSelected ? 'success' : 'primary'} disabled={savingId !== null || isSelected} onClick={() => selectRepository(repository.id)} sx={{ flexShrink: 0 }}>
+                    <Stack direction="row" alignItems="center" spacing={1} sx={{ display: { xs: 'none', sm: 'flex' }, flexShrink: 0 }}>
+                      <Chip label={repository.private ? 'Private' : 'Public'} size="small" variant="outlined" />
+                      <Chip label={permission} size="small" color={permission === 'Read' ? 'default' : 'primary'} variant="outlined" />
+                      <Button variant={isSelected ? 'contained' : 'outlined'} color={isSelected ? 'success' : 'primary'} disabled={savingId !== null || isSelected} onClick={() => selectRepository(repository.id)}>
+                        {savingId === repository.id ? 'Selecting…' : isSelected ? 'Selected' : 'Select'}
+                      </Button>
+                    </Stack>
+                    <Button variant={isSelected ? 'contained' : 'outlined'} color={isSelected ? 'success' : 'primary'} disabled={savingId !== null || isSelected} onClick={() => selectRepository(repository.id)} sx={{ display: { xs: 'inline-flex', sm: 'none' }, alignSelf: 'flex-start' }}>
                       {savingId === repository.id ? 'Selecting…' : isSelected ? 'Selected' : 'Select'}
                     </Button>
                   </Stack>
