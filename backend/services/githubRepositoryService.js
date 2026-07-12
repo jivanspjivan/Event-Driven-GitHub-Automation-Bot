@@ -1,5 +1,9 @@
+const crypto = require('crypto');
+
 const GITHUB_API_VERSION = '2022-11-28';
 const GITHUB_API_URL = 'https://api.github.com';
+const REPOSITORY_CACHE_TTL_MS = 60_000;
+const repositoryCache = new Map();
 
 const githubRequest = async (accessToken, path) => {
   const response = await fetch(`${GITHUB_API_URL}${path}`, {
@@ -33,12 +37,52 @@ const toRepository = (repository) => ({
   permissions: repository.permissions || null,
 });
 
-const listRepositories = async (accessToken) => {
-  const repositories = await githubRequest(
-    accessToken,
-    '/user/repos?per_page=100&sort=updated&affiliation=owner,collaborator,organization_member',
-  );
-  return repositories.map(toRepository);
+const loadAllRepositories = async (accessToken, bypassCache = false) => {
+  const cacheKey = crypto.createHash('sha256').update(accessToken).digest('hex');
+  const cached = repositoryCache.get(cacheKey);
+  if (!bypassCache && cached && cached.expiresAt > Date.now()) return cached.repositories;
+
+  const repositories = [];
+  let page = 1;
+  while (true) {
+    const pageRepositories = await githubRequest(
+      accessToken,
+      `/user/repos?per_page=100&page=${page}&sort=updated&affiliation=owner,collaborator,organization_member`,
+    );
+    repositories.push(...pageRepositories.map(toRepository));
+    if (pageRepositories.length < 100) break;
+    page += 1;
+  }
+
+  repositoryCache.set(cacheKey, {
+    repositories,
+    expiresAt: Date.now() + REPOSITORY_CACHE_TTL_MS,
+  });
+  return repositories;
+};
+
+const paginateRepositories = (repositories, { search = '', page = 1, pageSize = 10 } = {}) => {
+  const normalizedSearch = search.trim().toLowerCase();
+  const filtered = normalizedSearch
+    ? repositories.filter((repository) =>
+        `${repository.fullName} ${repository.owner} ${repository.description || ''}`
+          .toLowerCase()
+          .includes(normalizedSearch),
+      )
+    : repositories;
+  const totalItems = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const offset = (currentPage - 1) * pageSize;
+  return {
+    repositories: filtered.slice(offset, offset + pageSize),
+    pagination: { page: currentPage, pageSize, totalItems, totalPages },
+  };
+};
+
+const listRepositories = async (accessToken, options = {}) => {
+  const repositories = await loadAllRepositories(accessToken, options.bypassCache);
+  return paginateRepositories(repositories, options);
 };
 
 const getRepository = async (accessToken, repositoryId) => {
@@ -46,4 +90,4 @@ const getRepository = async (accessToken, repositoryId) => {
   return toRepository(repository);
 };
 
-module.exports = { listRepositories, getRepository };
+module.exports = { listRepositories, getRepository, paginateRepositories };
