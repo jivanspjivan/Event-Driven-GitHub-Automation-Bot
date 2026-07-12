@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Divider, Stack, Typography } from '@mui/material';
 import { automationApi } from '../api';
 
@@ -8,26 +8,35 @@ const actionLabel = (type) => type === 'github_issue_triage' ? 'GitHub label and
 export default function AutomationActivity({ selectedRepository, refreshVersion }) {
   const [rules, setRules] = useState([]);
   const [deliveries, setDeliveries] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [workingRuleId, setWorkingRuleId] = useState(null);
   const [error, setError] = useState('');
+  const requestInFlight = useRef(false);
 
-  const loadActivity = async () => {
-    if (!selectedRepository) { setRules([]); setDeliveries([]); return; }
-    setLoading(true);
+  const loadActivity = async ({ background = false } = {}) => {
+    if (!selectedRepository) { setRules([]); setDeliveries([]); setInitialLoading(false); return; }
+    if (requestInFlight.current) return;
+    requestInFlight.current = true;
+    if (background) setRefreshing(true);
+    else setInitialLoading(true);
     setError('');
     try {
       const [rulesData, deliveriesData] = await Promise.all([automationApi.listRules(), automationApi.listDeliveries()]);
       setRules(rulesData.rules);
       setDeliveries(deliveriesData.deliveries);
     } catch (requestError) { setError(requestError.message); }
-    finally { setLoading(false); }
+    finally {
+      requestInFlight.current = false;
+      setInitialLoading(false);
+      setRefreshing(false);
+    }
   };
 
   useEffect(() => {
     loadActivity();
     if (!selectedRepository) return undefined;
-    const timer = window.setInterval(loadActivity, 10_000);
+    const timer = window.setInterval(() => loadActivity({ background: true }), 10_000);
     return () => window.clearInterval(timer);
   }, [selectedRepository?.id, refreshVersion]);
 
@@ -54,10 +63,10 @@ export default function AutomationActivity({ selectedRepository, refreshVersion 
       <Card><CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
         <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
           <Box><Typography component="h2" variant="h6" fontWeight={700}>Automation rules</Typography><Typography variant="body2" color="text.secondary">Rules for {selectedRepository.fullName}</Typography></Box>
-          <Button size="small" onClick={loadActivity} disabled={loading}>Refresh</Button>
+          <Button size="small" onClick={() => loadActivity({ background: true })} disabled={refreshing}>{refreshing ? 'Refreshing…' : 'Refresh'}</Button>
         </Stack>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-        {loading ? <Stack alignItems="center" py={4}><CircularProgress size={28} /></Stack> : rules.length === 0 ? <Alert severity="info">No automation rules exist for this repository.</Alert> : (
+        {initialLoading ? <Stack alignItems="center" py={4}><CircularProgress size={28} /></Stack> : rules.length === 0 ? <Alert severity="info">No automation rules exist for this repository.</Alert> : (
           <Stack divider={<Divider flexItem />}>
             {rules.map((rule) => (
               <Box key={rule.id} sx={{ py: 2 }}><Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2}>
@@ -72,7 +81,7 @@ export default function AutomationActivity({ selectedRepository, refreshVersion 
       </CardContent></Card>
       <Card><CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
         <Typography component="h2" variant="h6" fontWeight={700}>Recent webhook deliveries</Typography><Typography variant="body2" color="text.secondary" mb={2}>Latest automation outcomes for this repository</Typography>
-        {loading ? <Stack alignItems="center" py={4}><CircularProgress size={28} /></Stack> : deliveries.length === 0 ? <Alert severity="info">No GitHub webhook deliveries have been recorded yet.</Alert> : (
+        {initialLoading ? <Stack alignItems="center" py={4}><CircularProgress size={28} /></Stack> : deliveries.length === 0 ? <Alert severity="info">No GitHub webhook deliveries have been recorded yet.</Alert> : (
           <Stack divider={<Divider flexItem />}>{deliveries.map((delivery) => (
             <Box key={delivery.deliveryId} sx={{ py: 2 }}>
               <Stack direction="row" justifyContent="space-between" spacing={2} mb={0.75}><Typography fontWeight={700}>{delivery.eventName}.{delivery.actionName || 'event'}</Typography><Chip size="small" label={delivery.status} color={statusColor(delivery.status)} /></Stack>
