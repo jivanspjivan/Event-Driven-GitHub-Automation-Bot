@@ -4,6 +4,7 @@ const { required } = require('../config/env');
 const pool = require('../db/pool');
 
 const PostgreSqlStore = connectPgSimple(session);
+const isProduction = process.env.NODE_ENV === 'production';
 
 const sessionMiddleware = session({
   name: 'github_automation.sid',
@@ -18,8 +19,8 @@ const sessionMiddleware = session({
   cookie: {
     httpOnly: true,
     maxAge: 7 * 24 * 60 * 60 * 1000,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    sameSite: isProduction ? 'none' : 'lax',
+    secure: isProduction,
   },
 });
 
