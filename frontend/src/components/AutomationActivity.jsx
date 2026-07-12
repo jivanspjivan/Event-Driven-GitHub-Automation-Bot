@@ -3,6 +3,7 @@ import { Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Paginati
 import { automationApi } from '../api';
 import formatRepositoryName from '../utils/formatRepositoryName';
 import { GitHubEventIcon, PauseIcon, PlayIcon, TrashIcon } from './AutomationIcons';
+import FeedbackToast from './FeedbackToast';
 
 const statusColor = (status) => ['completed', 'success'].includes(status) ? 'success' : status === 'failed' ? 'error' : status === 'ignored' ? 'default' : 'warning';
 const actionLabel = (type) => type === 'github_issue_triage' ? 'GitHub label and assignment' : type === 'slack_notification' ? 'Slack notification' : type === 'record_event' ? 'Event recording' : type;
@@ -29,6 +30,7 @@ export default function AutomationActivity({ selectedRepository, refreshVersion 
   const [refreshing, setRefreshing] = useState(false);
   const [workingRuleId, setWorkingRuleId] = useState(null);
   const [error, setError] = useState('');
+  const [toast, setToast] = useState(null);
   const requestInFlight = useRef(false);
 
   const loadActivity = async ({ background = false } = {}) => {
@@ -64,15 +66,29 @@ export default function AutomationActivity({ selectedRepository, refreshVersion 
     try {
       const data = await automationApi.updateRule(rule.id, { enabled: !rule.enabled });
       setRules((current) => current.map((item) => item.id === rule.id ? data.rule : item));
-    } catch (requestError) { setError(requestError.message); }
+      setToast({
+        severity: 'success',
+        message: `${ruleEventName(rule.eventName)} ${rule.enabled ? 'disabled' : 'enabled'} successfully.`,
+      });
+    } catch (requestError) {
+      setError(requestError.message);
+      setToast({ severity: 'error', message: `Could not ${rule.enabled ? 'disable' : 'enable'} rule: ${requestError.message}` });
+    }
     finally { setWorkingRuleId(null); }
   };
 
   const removeRule = async (rule) => {
     if (!window.confirm(`Delete the ${rule.actionType} automation rule?`)) return;
     setWorkingRuleId(rule.id); setError('');
-    try { await automationApi.deleteRule(rule.id); setRules((current) => current.filter((item) => item.id !== rule.id)); }
-    catch (requestError) { setError(requestError.message); }
+    try {
+      await automationApi.deleteRule(rule.id);
+      setRules((current) => current.filter((item) => item.id !== rule.id));
+      setToast({ severity: 'success', message: `${ruleEventName(rule.eventName)} deleted successfully.` });
+    }
+    catch (requestError) {
+      setError(requestError.message);
+      setToast({ severity: 'error', message: `Could not delete rule: ${requestError.message}` });
+    }
     finally { setWorkingRuleId(null); }
   };
 
@@ -142,6 +158,7 @@ export default function AutomationActivity({ selectedRepository, refreshVersion 
           </Stack></>
         )}
       </CardContent></Card>
+      <FeedbackToast toast={toast} onClose={() => setToast(null)} />
     </Box>
   );
 }

@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Alert, Box, Button, Card, CardContent, Stack, TextField, Typography } from '@mui/material';
 import { automationApi } from '../api';
+import FeedbackToast from './FeedbackToast';
 
 export default function AutomationRuleForm({ selectedRepository, defaultAssignee, onRuleCreated = () => {} }) {
   const [label, setLabel] = useState('bug');
   const [assignee, setAssignee] = useState(defaultAssignee);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [toast, setToast] = useState(null);
 
   const createRule = async (event) => {
     event.preventDefault();
@@ -14,6 +16,7 @@ export default function AutomationRuleForm({ selectedRepository, defaultAssignee
     const normalizedAssignee = assignee.trim();
     if (!normalizedLabel || !normalizedAssignee) {
       setMessage({ type: 'error', text: 'Enter both a label and a developer GitHub login.' });
+      setToast({ severity: 'error', message: 'Enter a label and developer GitHub login.' });
       return;
     }
     setSaving(true);
@@ -24,10 +27,12 @@ export default function AutomationRuleForm({ selectedRepository, defaultAssignee
         actionType: 'triage_issue',
         configuration: { label: normalizedLabel, assignee: normalizedAssignee },
       });
-      setMessage({ type: 'success', text: `Rule created for ${selectedRepository.fullName}. New issues will be labelled, assigned, and sent to Slack.` });
+      setMessage({ type: '', text: '' });
+      setToast({ severity: 'success', message: `Triage rule created successfully for ${selectedRepository.name}.` });
       onRuleCreated(data.rule);
     } catch (error) {
       setMessage({ type: 'error', text: error.message });
+      setToast({ severity: 'error', message: `Could not create triage rule: ${error.message}` });
     } finally {
       setSaving(false);
     }
@@ -74,6 +79,7 @@ export default function AutomationRuleForm({ selectedRepository, defaultAssignee
           )}
         </Stack>
       </CardContent>
+      <FeedbackToast toast={toast} onClose={() => setToast(null)} />
     </Card>
   );
 }
