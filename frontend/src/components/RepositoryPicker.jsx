@@ -2,6 +2,25 @@ import { useEffect, useState } from 'react';
 import { Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Divider, Link, Pagination, Stack, TextField, Typography } from '@mui/material';
 import { apiRequest } from '../api';
 
+const repositoryButtonSx = (isSelected) =>
+  isSelected
+    ? {
+        borderColor: '#a5d6a7',
+        bgcolor: '#e8f5e9',
+        color: '#2e7d32',
+        '&.Mui-disabled': {
+          borderColor: '#a5d6a7',
+          bgcolor: '#e8f5e9',
+          color: '#2e7d32',
+          opacity: 1,
+        },
+      }
+    : {
+        bgcolor: '#1b5e20',
+        color: 'white',
+        '&:hover': { bgcolor: '#134e18' },
+      };
+
 export default function RepositoryPicker({ onSelectionChange }) {
   const [repositories, setRepositories] = useState([]);
   const [selectedRepository, setSelectedRepository] = useState(null);
@@ -113,11 +132,11 @@ export default function RepositoryPicker({ onSelectionChange }) {
                     <Stack direction="row" alignItems="center" spacing={1} sx={{ display: { xs: 'none', sm: 'flex' }, flexShrink: 0 }}>
                       <Chip label={repository.private ? 'Private' : 'Public'} size="small" variant="outlined" />
                       <Chip label={permission} size="small" color={permission === 'Read' ? 'default' : 'primary'} variant="outlined" />
-                      <Button variant={isSelected ? 'contained' : 'outlined'} color={isSelected ? 'success' : 'primary'} disabled={savingId !== null || isSelected} onClick={() => selectRepository(repository.id)}>
+                      <Button variant={isSelected ? 'outlined' : 'contained'} color="success" disabled={savingId !== null || isSelected} onClick={() => selectRepository(repository.id)} sx={repositoryButtonSx(isSelected)}>
                         {savingId === repository.id ? 'Selecting…' : isSelected ? 'Selected' : 'Select'}
                       </Button>
                     </Stack>
-                    <Button variant={isSelected ? 'contained' : 'outlined'} color={isSelected ? 'success' : 'primary'} disabled={savingId !== null || isSelected} onClick={() => selectRepository(repository.id)} sx={{ display: { xs: 'inline-flex', sm: 'none' }, alignSelf: 'flex-start' }}>
+                    <Button variant={isSelected ? 'outlined' : 'contained'} color="success" disabled={savingId !== null || isSelected} onClick={() => selectRepository(repository.id)} sx={{ ...repositoryButtonSx(isSelected), display: { xs: 'inline-flex', sm: 'none' }, alignSelf: 'flex-start' }}>
                       {savingId === repository.id ? 'Selecting…' : isSelected ? 'Selected' : 'Select'}
                     </Button>
                   </Stack>
