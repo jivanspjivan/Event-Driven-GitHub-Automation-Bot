@@ -1,6 +1,6 @@
 const { required } = require('../config/env');
 const { verifyGitHubSignature } = require('../services/webhookSignatureService');
-const { processDelivery } = require('../services/webhookService');
+const { enqueueDelivery } = require('../services/webhookService');
 const logger = require('../config/logger');
 
 const receiveGitHubWebhook = async (req, res) => {
@@ -29,18 +29,17 @@ const receiveGitHubWebhook = async (req, res) => {
     return res.status(400).json({ status: 'error', message: 'Invalid JSON payload' });
   }
 
-  const result = await processDelivery({ deliveryId, eventName, payload });
-  logger.info('GitHub webhook processed', {
+  const result = await enqueueDelivery({ deliveryId, eventName, payload });
+  logger.info('GitHub webhook enqueued', {
     deliveryId,
     eventName,
     repositoryId: payload.repository?.id,
     duplicate: result.duplicate,
-    matchedRuleCount: result.matchedRuleCount,
-    executedActionCount: result.executedActionCount,
-    actionResults: result.actionResults?.map(({ actionType, status }) => ({ actionType, status })),
-    processingStatus: result.status || 'duplicate',
+    workflowId: result.workflowId,
+    jobId: result.jobId,
+    processingStatus: result.status,
   });
-  return res.status(202).json({ status: result.duplicate ? 'duplicate' : result.status, ...result });
+  return res.status(202).json(result);
 };
 
 module.exports = { receiveGitHubWebhook };

@@ -4,6 +4,7 @@ const GITHUB_API_VERSION = '2026-03-10';
 const githubRequest = async (accessToken, path, options = {}) => {
   const response = await fetch(`${GITHUB_API_URL}${path}`, {
     ...options,
+    signal: options.signal || AbortSignal.timeout(15_000),
     headers: {
       Accept: 'application/vnd.github+json',
       Authorization: `Bearer ${accessToken}`,
