@@ -17,7 +17,7 @@ export default function Dashboard({ user, onLogout, loggingOut, error }) {
           <Link href="/dashboard" color="text.primary" underline="none" sx={{ justifySelf: { xs: 'start', md: 'center' } }}>
             <Stack direction="row" alignItems="center" justifyContent="center" spacing={1.5}>
               <BrandMark small />
-              <Typography component="span" fontWeight={800} sx={{ fontSize: { xs: '1.2rem', sm: '2rem' } }}>Automation Bot</Typography>
+              <Typography component="span" fontWeight={800} sx={{ fontSize: { xs: '1.2rem', sm: '2rem' } }}>GitHub Automation Bot</Typography>
             </Stack>
           </Link>
           <Button variant="contained" color="error" disabled={loggingOut} onClick={onLogout} sx={{ justifySelf: 'end' }}>
@@ -28,8 +28,8 @@ export default function Dashboard({ user, onLogout, loggingOut, error }) {
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 3 }}>
           <Card><CardContent sx={{ p: { xs: 3, md: 5 }, '&:last-child': { pb: { xs: 3, md: 5 } } }}>
             <Chip label="GitHub workspace" color="primary" size="small" sx={{ mb: 2 }} />
-            <Typography component="h1" variant="h3" fontWeight={700} gutterBottom>Welcome, {user.name || user.login}</Typography>
-            <Typography variant="h6" color="text.secondary" fontWeight={400} mb={4}>
+            <Typography component="h1" fontWeight={700} gutterBottom sx={{ fontSize: { xs: '1.65rem', sm: '2.1rem' }, lineHeight: 1.25 }}>Welcome, {user.name || user.login}</Typography>
+            <Typography color="text.secondary" fontWeight={400} mb={4} sx={{ fontSize: { xs: '0.92rem', sm: '1rem' }, lineHeight: 1.6 }}>
               Automatically triage new GitHub issues, assign the right developer, notify Slack, and track every action from one dashboard.
             </Typography>
             <Box sx={{ bgcolor: 'grey.100', borderRadius: 3, p: 3 }}>
