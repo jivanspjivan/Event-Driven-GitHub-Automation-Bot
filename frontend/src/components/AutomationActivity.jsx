@@ -1,9 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Divider, Pagination, Stack, Typography } from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Pagination, Stack, Typography } from '@mui/material';
 import { automationApi } from '../api';
+import formatRepositoryName from '../utils/formatRepositoryName';
+import { GitHubEventIcon, PauseIcon, PlayIcon, TrashIcon } from './AutomationIcons';
 
 const statusColor = (status) => ['completed', 'success'].includes(status) ? 'success' : status === 'failed' ? 'error' : status === 'ignored' ? 'default' : 'warning';
 const actionLabel = (type) => type === 'github_issue_triage' ? 'GitHub label and assignment' : type === 'slack_notification' ? 'Slack notification' : type === 'record_event' ? 'Event recording' : type;
+const titleCase = (value = '') => value.replace(/[_-]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+const eventName = (event, action) => {
+  const eventLabels = {
+    issues: 'Issue',
+    pull_request: 'Pull request',
+    push: 'Code pushed',
+    create: 'Branch or tag created',
+  };
+  const label = eventLabels[event] || titleCase(event);
+  if (!action || action === 'event') return label;
+  return `${label} ${titleCase(action).toLowerCase()}`;
+};
+const ruleEventName = (event) => event === 'issues' ? 'New issue automation' : `${eventName(event)} automation`;
 
 export default function AutomationActivity({ selectedRepository, refreshVersion }) {
   const [rules, setRules] = useState([]);
@@ -62,36 +77,47 @@ export default function AutomationActivity({ selectedRepository, refreshVersion 
   };
 
   if (!selectedRepository) return null;
+  const repositoryName = formatRepositoryName(selectedRepository.name);
   return (
     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 3, mt: 3 }}>
-      <Card><CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
+      <Card sx={{ boxShadow: '0 7px 24px rgba(23, 74, 126, 0.08)' }}><CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
         <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
-          <Box><Typography component="h2" variant="h6" fontWeight={700}>Automation rules</Typography><Typography variant="body2" color="text.secondary">Rules for {selectedRepository.fullName}</Typography></Box>
+          <Box>
+            <Typography component="h2" fontWeight={800} sx={{ color: '#123b66', fontSize: '24px', lineHeight: 1.25 }}>Automation rules</Typography>
+            <Typography color="text.secondary" sx={{ fontSize: '0.78rem', mt: 0.35 }}>Repository · <Box component="span" fontWeight={700}>{repositoryName}</Box></Typography>
+          </Box>
           <Button size="small" onClick={() => loadActivity({ background: true })} disabled={refreshing}>{refreshing ? 'Refreshing…' : 'Refresh'}</Button>
         </Stack>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         {initialLoading ? <Stack alignItems="center" py={4}><CircularProgress size={28} /></Stack> : rules.length === 0 ? <Alert severity="info">No automation rules exist for this repository.</Alert> : (
-          <Stack divider={<Divider flexItem />}>
+          <Stack spacing={1.5}>
             {rules.map((rule) => (
-              <Box key={rule.id} sx={{ py: 2 }}><Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2}>
-                <Box><Stack direction="row" spacing={1} alignItems="center" mb={0.75}><Typography fontWeight={700}>{rule.configuration.label || rule.actionType}</Typography><Chip size="small" label={rule.enabled ? 'Enabled' : 'Disabled'} color={rule.enabled ? 'success' : 'default'} /></Stack>
-                  <Typography variant="body2" color="text.secondary">{rule.actionType === 'triage_issue' ? `New issue → label ${rule.configuration.label} → assign @${rule.configuration.assignee} → notify Slack` : `${rule.eventName} → record event`} · action: {rule.actionType}</Typography>
+              <Box key={rule.id} sx={{ borderRadius: 2.5, bgcolor: '#fbfcfe', boxShadow: '0 2px 10px rgba(23, 74, 126, 0.08)', px: 2, py: 1.75 }}><Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2}>
+                <Box sx={{ minWidth: 0 }}><Stack direction="row" spacing={1} alignItems="center" mb={0.65}><Typography fontWeight={800} sx={{ color: '#174a7e', fontSize: '1rem' }}>{ruleEventName(rule.eventName)}</Typography><Chip size="small" label={rule.enabled ? 'Enabled' : 'Disabled'} color={rule.enabled ? 'success' : 'default'} /></Stack>
+                  <Typography color="text.secondary" sx={{ fontSize: '0.76rem', lineHeight: 1.45 }}>{rule.actionType === 'triage_issue' ? `Label ${rule.configuration.label} → assign @${rule.configuration.assignee} → notify Slack` : 'Record incoming event'}</Typography>
                 </Box>
-                <Stack direction="row" spacing={1}><Button size="small" variant="outlined" disabled={workingRuleId !== null} onClick={() => toggleRule(rule)}>{rule.enabled ? 'Disable' : 'Enable'}</Button><Button size="small" color="error" disabled={workingRuleId !== null} onClick={() => removeRule(rule)}>Delete</Button></Stack>
+                <Stack direction="row" spacing={0.75} flexShrink={0}>
+                  <Button size="small" variant="outlined" startIcon={rule.enabled ? <PauseIcon /> : <PlayIcon />} disabled={workingRuleId !== null} onClick={() => toggleRule(rule)} sx={{ whiteSpace: 'nowrap', fontWeight: 700 }}>{rule.enabled ? 'Disable' : 'Enable'}</Button>
+                  <Button size="small" variant="contained" color="error" startIcon={<TrashIcon />} disabled={workingRuleId !== null} onClick={() => removeRule(rule)} sx={{ whiteSpace: 'nowrap', bgcolor: '#c62828', fontWeight: 700, boxShadow: 'none', '&:hover': { bgcolor: '#a91f1f', boxShadow: '0 4px 10px rgba(198, 40, 40, 0.22)' } }}>Delete</Button>
+                </Stack>
               </Stack></Box>
             ))}
           </Stack>
         )}
       </CardContent></Card>
-      <Card><CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
-        <Typography component="h2" variant="h6" fontWeight={700}>Recent webhook deliveries</Typography><Typography variant="body2" color="text.secondary" mb={2}>Latest automation outcomes for this repository</Typography>
+      <Card sx={{ boxShadow: '0 7px 24px rgba(23, 74, 126, 0.08)' }}><CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
+        <Typography component="h2" fontWeight={800} sx={{ color: '#123b66', fontSize: '24px', lineHeight: 1.25 }}>Recent webhook deliveries</Typography>
+        <Typography color="text.secondary" mb={2} sx={{ fontSize: '0.78rem', mt: 0.35 }}>Repository · <Box component="span" fontWeight={700}>{repositoryName}</Box></Typography>
         {initialLoading ? <Stack alignItems="center" py={4}><CircularProgress size={28} /></Stack> : deliveries.length === 0 ? <Alert severity="info">No GitHub webhook deliveries have been recorded yet.</Alert> : (
-          <><Stack divider={<Divider flexItem />}>{deliveries.map((delivery) => (
-            <Box key={delivery.deliveryId} sx={{ py: 2 }}>
-              <Stack direction="row" justifyContent="space-between" spacing={2} mb={0.75}><Typography fontWeight={700}>{delivery.eventName}.{delivery.actionName || 'event'}</Typography><Chip size="small" label={delivery.status} color={statusColor(delivery.status)} /></Stack>
-              <Typography variant="body2" color="text.secondary">{delivery.executedActionCount} action(s) executed · {new Date(delivery.receivedAt).toLocaleString()}</Typography>
+          <><Stack>{deliveries.map((delivery, deliveryIndex) => (
+            <Box key={delivery.deliveryId} sx={{ position: 'relative', pl: 4.5, pb: deliveryIndex === deliveries.length - 1 ? 0 : 2 }}>
+              {deliveryIndex !== deliveries.length - 1 && <Box sx={{ position: 'absolute', top: 28, bottom: 0, left: 14, width: '2px', bgcolor: '#dbe5f0' }} />}
+              <Box sx={{ position: 'absolute', top: 10, left: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: '50%', bgcolor: '#eef4ff', color: '#174a7e', boxShadow: '0 0 0 4px white' }}><GitHubEventIcon size={17} /></Box>
+              <Box sx={{ borderRadius: 2.5, bgcolor: '#fbfcfe', boxShadow: '0 2px 10px rgba(23, 74, 126, 0.08)', px: 2, py: 1.5 }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2} mb={0.45}><Typography fontWeight={800} sx={{ color: '#174a7e', fontSize: '1rem' }}>{eventName(delivery.eventName, delivery.actionName)}</Typography><Chip size="small" label={delivery.status} color={statusColor(delivery.status)} /></Stack>
+              <Typography color="text.secondary" sx={{ fontSize: '0.74rem' }}>{delivery.executedActionCount} action(s) · {new Date(delivery.receivedAt).toLocaleString()}</Typography>
               {delivery.jobId && (
-                <Typography variant="caption" color="text.secondary">
+                <Typography color="text.secondary" sx={{ display: 'block', fontSize: '0.68rem', mt: 0.25 }}>
                   Workflow job #{delivery.jobId} · attempt {delivery.attemptCount} of {delivery.maxRetryCount + 1}
                   {delivery.status === 'unprocessed' && delivery.nextAttemptAt
                     ? ` · next run ${new Date(delivery.nextAttemptAt).toLocaleString()}`
@@ -105,6 +131,7 @@ export default function AutomationActivity({ selectedRepository, refreshVersion 
                 </Box>
               ))}</Stack>}
               {delivery.errorMessage && <Typography variant="body2" color="error.main" sx={{ mt: 0.75, overflowWrap: 'anywhere' }}>{delivery.errorMessage}</Typography>}
+              </Box>
             </Box>
           ))}</Stack>
           <Stack direction={{ xs: 'column', sm: 'row' }} alignItems="center" justifyContent="space-between" spacing={2} mt={3}>
