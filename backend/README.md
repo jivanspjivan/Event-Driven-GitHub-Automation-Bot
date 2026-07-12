@@ -130,6 +130,10 @@ Create a Slack app, enable Incoming Webhooks, add a webhook to a test channel, a
 environment variables when deployed. A successful issue triage posts the issue, repository,
 reporter, label, and assignee to that Slack channel.
 
+GitHub write-back and Slack delivery are executed and recorded independently. The delivery history
+includes an `actionResults` entry for each action, so a Slack outage remains visible even when the
+GitHub label and assignment succeeded.
+
 In the selected repository's GitHub webhook settings, use the public URL
 `https://your-api.example/api/webhooks/github`, content type `application/json`, and the same secret
 as `GITHUB_WEBHOOK_SECRET`. Recent results are available from `GET /api/automations/deliveries`.
