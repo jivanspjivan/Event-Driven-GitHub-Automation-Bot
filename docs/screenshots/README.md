@@ -13,7 +13,9 @@ Add the following PNG files to this directory. The root README already reference
 08-github-issue-triaged.png
 09-two-webhook-events.png          # recommended
 10-retry-history.png               # recommended
-11-live-deployment.png             # recommended
+11-live-deployment.png
+12-backend-health.png
+13-live-oauth-dashboard.png        # recommended after OAuth configuration
 ```
 
 ## Capture guidance
