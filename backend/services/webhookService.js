@@ -178,7 +178,27 @@ const processWorkflowJob = async (job) => {
   return failedAction ? { status: 'failed', errorMessage } : { status: 'success' };
 };
 
-const listDeliveries = async (userId, limit = 50) => {
+const getPagination = (totalItems, page, pageSize) => {
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  return {
+    page: currentPage,
+    pageSize,
+    totalItems,
+    totalPages,
+    offset: (currentPage - 1) * pageSize,
+  };
+};
+
+const listDeliveries = async (userId, { page = 1, pageSize = 5 } = {}) => {
+  const countResult = await pool.query(
+    `SELECT COUNT(*)::INTEGER AS total
+       FROM webhook_deliveries deliveries
+       JOIN user_repository_selections selections ON selections.repository_id = deliveries.repository_id
+      WHERE selections.user_id = $1`,
+    [userId],
+  );
+  const pagination = getPagination(countResult.rows[0].total, page, pageSize);
   const result = await pool.query(
     `SELECT deliveries.delivery_id, deliveries.event_name, deliveries.action_name,
             deliveries.status, deliveries.matched_rule_count, deliveries.executed_action_count,
@@ -190,10 +210,10 @@ const listDeliveries = async (userId, limit = 50) => {
        LEFT JOIN workflow_jobs jobs ON jobs.delivery_id = deliveries.id
       WHERE selections.user_id = $1
       ORDER BY deliveries.received_at DESC
-      LIMIT $2`,
-    [userId, limit],
+      LIMIT $2 OFFSET $3`,
+    [userId, pagination.pageSize, pagination.offset],
   );
-  return result.rows.map((row) => ({
+  const deliveries = result.rows.map((row) => ({
     deliveryId: row.delivery_id,
     eventName: row.event_name,
     actionName: row.action_name,
@@ -209,6 +229,15 @@ const listDeliveries = async (userId, limit = 50) => {
     maxRetryCount: row.max_retry_count,
     nextAttemptAt: row.next_attempt_at,
   }));
+  return {
+    deliveries,
+    pagination: {
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+      totalItems: pagination.totalItems,
+      totalPages: pagination.totalPages,
+    },
+  };
 };
 
 module.exports = {
@@ -217,4 +246,5 @@ module.exports = {
   enqueueDelivery,
   processWorkflowJob,
   listDeliveries,
+  getPagination,
 };

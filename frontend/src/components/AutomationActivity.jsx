@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Divider, Stack, Typography } from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Divider, Pagination, Stack, Typography } from '@mui/material';
 import { automationApi } from '../api';
 
 const statusColor = (status) => ['completed', 'success'].includes(status) ? 'success' : status === 'failed' ? 'error' : status === 'ignored' ? 'default' : 'warning';
@@ -8,6 +8,8 @@ const actionLabel = (type) => type === 'github_issue_triage' ? 'GitHub label and
 export default function AutomationActivity({ selectedRepository, refreshVersion }) {
   const [rules, setRules] = useState([]);
   const [deliveries, setDeliveries] = useState([]);
+  const [deliveryPage, setDeliveryPage] = useState(1);
+  const [deliveryPagination, setDeliveryPagination] = useState({ page: 1, pageSize: 5, totalItems: 0, totalPages: 1 });
   const [initialLoading, setInitialLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [workingRuleId, setWorkingRuleId] = useState(null);
@@ -22,9 +24,11 @@ export default function AutomationActivity({ selectedRepository, refreshVersion 
     else setInitialLoading(true);
     setError('');
     try {
-      const [rulesData, deliveriesData] = await Promise.all([automationApi.listRules(), automationApi.listDeliveries()]);
+      const [rulesData, deliveriesData] = await Promise.all([automationApi.listRules(), automationApi.listDeliveries(deliveryPage, 5)]);
       setRules(rulesData.rules);
       setDeliveries(deliveriesData.deliveries);
+      setDeliveryPagination(deliveriesData.pagination);
+      if (deliveriesData.pagination.page !== deliveryPage) setDeliveryPage(deliveriesData.pagination.page);
     } catch (requestError) { setError(requestError.message); }
     finally {
       requestInFlight.current = false;
@@ -38,7 +42,7 @@ export default function AutomationActivity({ selectedRepository, refreshVersion 
     if (!selectedRepository) return undefined;
     const timer = window.setInterval(() => loadActivity({ background: true }), 10_000);
     return () => window.clearInterval(timer);
-  }, [selectedRepository?.id, refreshVersion]);
+  }, [selectedRepository?.id, refreshVersion, deliveryPage]);
 
   const toggleRule = async (rule) => {
     setWorkingRuleId(rule.id); setError('');
@@ -82,7 +86,7 @@ export default function AutomationActivity({ selectedRepository, refreshVersion 
       <Card><CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
         <Typography component="h2" variant="h6" fontWeight={700}>Recent webhook deliveries</Typography><Typography variant="body2" color="text.secondary" mb={2}>Latest automation outcomes for this repository</Typography>
         {initialLoading ? <Stack alignItems="center" py={4}><CircularProgress size={28} /></Stack> : deliveries.length === 0 ? <Alert severity="info">No GitHub webhook deliveries have been recorded yet.</Alert> : (
-          <Stack divider={<Divider flexItem />}>{deliveries.map((delivery) => (
+          <><Stack divider={<Divider flexItem />}>{deliveries.map((delivery) => (
             <Box key={delivery.deliveryId} sx={{ py: 2 }}>
               <Stack direction="row" justifyContent="space-between" spacing={2} mb={0.75}><Typography fontWeight={700}>{delivery.eventName}.{delivery.actionName || 'event'}</Typography><Chip size="small" label={delivery.status} color={statusColor(delivery.status)} /></Stack>
               <Typography variant="body2" color="text.secondary">{delivery.executedActionCount} action(s) executed · {new Date(delivery.receivedAt).toLocaleString()}</Typography>
@@ -103,6 +107,12 @@ export default function AutomationActivity({ selectedRepository, refreshVersion 
               {delivery.errorMessage && <Typography variant="body2" color="error.main" sx={{ mt: 0.75, overflowWrap: 'anywhere' }}>{delivery.errorMessage}</Typography>}
             </Box>
           ))}</Stack>
+          <Stack direction={{ xs: 'column', sm: 'row' }} alignItems="center" justifyContent="space-between" spacing={2} mt={3}>
+            <Typography variant="body2" color="text.secondary">
+              {deliveryPagination.totalItems} deliver{deliveryPagination.totalItems === 1 ? 'y' : 'ies'} recorded
+            </Typography>
+            <Pagination page={deliveryPagination.page} count={deliveryPagination.totalPages} onChange={(_, nextPage) => setDeliveryPage(nextPage)} color="primary" disabled={refreshing} sx={{ ml: 'auto' }} />
+          </Stack></>
         )}
       </CardContent></Card>
     </Box>

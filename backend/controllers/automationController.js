@@ -25,12 +25,20 @@ const getRules = async (req, res) => {
 };
 
 const getDeliveries = async (req, res) => {
-  const deliveries = await automationRuleService.listDeliveries(req.session.user.databaseId);
+  const page = Number(req.query.page || 1);
+  const pageSize = Number(req.query.pageSize || 5);
+  if (!Number.isSafeInteger(page) || page <= 0 || !Number.isSafeInteger(pageSize) || pageSize <= 0 || pageSize > 50) {
+    return res.status(400).json({ status: 'error', message: 'page and pageSize must be valid positive integers; pageSize cannot exceed 50' });
+  }
+  const { deliveries, pagination } = await automationRuleService.listDeliveries(
+    req.session.user.databaseId,
+    { page, pageSize },
+  );
   logger.info('Automation deliveries listed', {
     userId: req.session.user.databaseId,
     deliveryCount: deliveries.length,
   });
-  res.status(200).json({ deliveries });
+  return res.status(200).json({ deliveries, pagination });
 };
 
 const createRule = async (req, res) => {

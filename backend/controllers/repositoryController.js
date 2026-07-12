@@ -9,11 +9,22 @@ const {
 } = require('../services/repositorySelectionService');
 
 const getRepositories = async (req, res) => {
-  const [repositories, selectedRepository] = await Promise.all([
-    listRepositories(req.session.githubAccessToken),
+  const page = Number(req.query.page || 1);
+  const pageSize = Number(req.query.pageSize || 10);
+  if (!Number.isSafeInteger(page) || page <= 0 || !Number.isSafeInteger(pageSize) || pageSize <= 0 || pageSize > 50) {
+    return res.status(400).json({ status: 'error', message: 'page and pageSize must be valid positive integers; pageSize cannot exceed 50' });
+  }
+  const search = String(req.query.search || '').trim().slice(0, 200);
+  const [{ repositories, pagination }, selectedRepository] = await Promise.all([
+    listRepositories(req.session.githubAccessToken, {
+      page,
+      pageSize,
+      search,
+      bypassCache: req.query.refresh === 'true',
+    }),
     getSelectedRepository(req.session.user.databaseId),
   ]);
-  res.status(200).json({ repositories, selectedRepository });
+  res.status(200).json({ repositories, selectedRepository, pagination });
 };
 
 const selectRepository = async (req, res) => {
