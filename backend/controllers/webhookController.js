@@ -37,6 +37,7 @@ const receiveGitHubWebhook = async (req, res) => {
     duplicate: result.duplicate,
     matchedRuleCount: result.matchedRuleCount,
     executedActionCount: result.executedActionCount,
+    actionResults: result.actionResults?.map(({ actionType, status }) => ({ actionType, status })),
     processingStatus: result.status || 'duplicate',
   });
   return res.status(202).json({ status: result.duplicate ? 'duplicate' : result.status, ...result });
