@@ -39,5 +39,6 @@ export const automationApi = {
       body: JSON.stringify(changes),
     }),
   deleteRule: (ruleId) => apiRequest(`/api/automations/${ruleId}`, { method: 'DELETE' }),
-  listDeliveries: () => apiRequest('/api/automations/deliveries'),
+  listDeliveries: (page = 1, pageSize = 5) =>
+    apiRequest(`/api/automations/deliveries?page=${page}&pageSize=${pageSize}`),
 };

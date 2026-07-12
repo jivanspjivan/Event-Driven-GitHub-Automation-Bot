@@ -119,7 +119,7 @@ export default function RepositoryPicker({ onSelectionChange }) {
               <Typography variant="body2" color="text.secondary">
                 {pagination.totalItems} repositor{pagination.totalItems === 1 ? 'y' : 'ies'} found
               </Typography>
-              <Pagination page={pagination.page} count={pagination.totalPages} onChange={(_, nextPage) => setPage(nextPage)} color="primary" disabled={loading} />
+              <Pagination page={pagination.page} count={pagination.totalPages} onChange={(_, nextPage) => setPage(nextPage)} color="primary" disabled={loading} sx={{ ml: 'auto' }} />
             </Stack>
           </>
         )}
