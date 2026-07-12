@@ -1,0 +1,6 @@
+BEGIN;
+
+ALTER TABLE webhook_deliveries
+  ADD COLUMN IF NOT EXISTS action_results JSONB NOT NULL DEFAULT '[]'::JSONB;
+
+COMMIT;
