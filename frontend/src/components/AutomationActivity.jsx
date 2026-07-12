@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Divider, Stack, Typography } from '@mui/material';
 import { automationApi } from '../api';
 
-const statusColor = (status) => status === 'completed' ? 'success' : status === 'failed' ? 'error' : status === 'ignored' ? 'default' : 'warning';
+const statusColor = (status) => ['completed', 'success'].includes(status) ? 'success' : status === 'failed' ? 'error' : status === 'ignored' ? 'default' : 'warning';
 const actionLabel = (type) => type === 'github_issue_triage' ? 'GitHub label and assignment' : type === 'slack_notification' ? 'Slack notification' : type === 'record_event' ? 'Event recording' : type;
 
 export default function AutomationActivity({ selectedRepository, refreshVersion }) {
@@ -86,6 +86,14 @@ export default function AutomationActivity({ selectedRepository, refreshVersion 
             <Box key={delivery.deliveryId} sx={{ py: 2 }}>
               <Stack direction="row" justifyContent="space-between" spacing={2} mb={0.75}><Typography fontWeight={700}>{delivery.eventName}.{delivery.actionName || 'event'}</Typography><Chip size="small" label={delivery.status} color={statusColor(delivery.status)} /></Stack>
               <Typography variant="body2" color="text.secondary">{delivery.executedActionCount} action(s) executed · {new Date(delivery.receivedAt).toLocaleString()}</Typography>
+              {delivery.jobId && (
+                <Typography variant="caption" color="text.secondary">
+                  Workflow job #{delivery.jobId} · attempt {delivery.attemptCount} of {delivery.maxRetryCount + 1}
+                  {delivery.status === 'unprocessed' && delivery.nextAttemptAt
+                    ? ` · next run ${new Date(delivery.nextAttemptAt).toLocaleString()}`
+                    : ''}
+                </Typography>
+              )}
               {delivery.actionResults?.length > 0 && <Stack spacing={0.75} sx={{ mt: 1.5 }}>{delivery.actionResults.map((result, index) => (
                 <Box key={`${delivery.deliveryId}-${result.actionType}-${index}`} sx={{ bgcolor: 'grey.100', borderRadius: 2, px: 1.5, py: 1 }}>
                   <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}><Typography variant="body2" fontWeight={600}>{actionLabel(result.actionType)}</Typography><Chip size="small" label={result.status} color={statusColor(result.status)} /></Stack>

@@ -104,12 +104,18 @@ const claimWorkflowJobs = async (workflow) => {
 
 const retryDelayMinutes = (attemptCount) => Math.min(2 ** Math.max(attemptCount - 1, 0), 30);
 
-const finishWorkflowJob = async (job, result) => {
+const getWorkflowTransition = (job, result) => {
   const succeeded = result.status === 'success';
   const retryAvailable = !succeeded && job.attempt_count <= job.max_retry_count;
   const jobStatus = succeeded ? 'success' : retryAvailable ? 'unprocessed' : 'failed';
   const deliveryStatus = succeeded ? 'success' : retryAvailable ? 'unprocessed' : 'failed';
   const delayMinutes = retryAvailable ? retryDelayMinutes(job.attempt_count) : 0;
+  return { jobStatus, deliveryStatus, retryAvailable, delayMinutes };
+};
+
+const finishWorkflowJob = async (job, result) => {
+  const transition = getWorkflowTransition(job, result);
+  const { jobStatus, deliveryStatus, retryAvailable, delayMinutes } = transition;
   const client = await pool.connect();
 
   try {
@@ -137,7 +143,7 @@ const finishWorkflowJob = async (job, result) => {
     client.release();
   }
 
-  return { jobStatus, deliveryStatus, retryAvailable, delayMinutes };
+  return transition;
 };
 
 const runWorkflow = async (workflow, processor) => {
@@ -160,6 +166,7 @@ module.exports = {
   enqueueWorkflowJob,
   claimWorkflowJobs,
   retryDelayMinutes,
+  getWorkflowTransition,
   finishWorkflowJob,
   runWorkflow,
 };

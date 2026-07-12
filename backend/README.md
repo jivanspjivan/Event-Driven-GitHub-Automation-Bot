@@ -140,6 +140,18 @@ GitHub write-back and Slack delivery are executed and recorded independently. Th
 includes an `actionResults` entry for each action, so a Slack outage remains visible even when the
 GitHub label and assignment succeeded.
 
+## Durable retry workflow
+
+New signed webhook deliveries are committed as `unprocessed` with one durable `workflow_jobs`
+record. The configured cron worker atomically claims jobs as `running`, executes pending GitHub and
+Slack actions, and finishes them as `success`. Failed jobs return to `unprocessed` with exponential
+delay until `RETRY_WORKFLOW_COUNT` retries are exhausted, after which they become `failed`.
+
+The workflow definition stores its stable `workflow_id`, configuration, and `last_run_at` in
+PostgreSQL. Each delivery has one `job_id`, attempt count, next run, lock time, and last error.
+Running jobs older than `RETRY_WORKFLOW_STALE_MINUTES` are recovered automatically. The worker uses
+database row locks with `SKIP LOCKED`, so multiple backend instances cannot claim the same job.
+
 In the selected repository's GitHub webhook settings, use the public URL
 `https://your-api.example/api/webhooks/github`, content type `application/json`, and the same secret
 as `GITHUB_WEBHOOK_SECRET`. Recent results are available from `GET /api/automations/deliveries`.
