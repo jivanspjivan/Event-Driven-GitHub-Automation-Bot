@@ -108,13 +108,13 @@ export default function AutomationActivity({ selectedRepository, refreshVersion 
         {initialLoading ? <Stack alignItems="center" py={4}><CircularProgress size={28} /></Stack> : rules.length === 0 ? <Alert severity="info">No automation rules exist for this repository.</Alert> : (
           <Stack spacing={1.5}>
             {rules.map((rule) => (
-              <Box key={rule.id} sx={{ borderRadius: 2.5, bgcolor: '#fbfcfe', boxShadow: '0 2px 10px rgba(23, 74, 126, 0.08)', px: 2, py: 1.75 }}><Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2}>
-                <Box sx={{ minWidth: 0 }}><Stack direction="row" spacing={1} alignItems="center" mb={0.65}><Typography fontWeight={800} sx={{ color: '#174a7e', fontSize: '1rem' }}>{ruleEventName(rule.eventName)}</Typography><Chip size="small" label={rule.enabled ? 'Enabled' : 'Disabled'} color={rule.enabled ? 'success' : 'default'} /></Stack>
+              <Box key={rule.id} sx={{ borderRadius: 2.5, bgcolor: '#fbfcfe', boxShadow: '0 2px 10px rgba(23, 74, 126, 0.08)', px: 2, py: 1.75 }}><Stack direction={{ xs: 'column', sm: 'row' }} alignItems="flex-start" justifyContent="space-between" spacing={2}>
+                <Box sx={{ minWidth: 0, width: '100%' }}><Stack direction="row" spacing={1} alignItems="center" mb={0.65} sx={{ flexWrap: 'wrap', rowGap: 0.75 }}><Typography fontWeight={800} sx={{ color: '#174a7e', fontSize: '1rem' }}>{ruleEventName(rule.eventName)}</Typography><Chip size="small" label={rule.enabled ? 'Enabled' : 'Disabled'} color={rule.enabled ? 'success' : 'default'} /></Stack>
                   <Typography color="text.secondary" sx={{ fontSize: '0.76rem', lineHeight: 1.45 }}>{rule.actionType === 'triage_issue' ? `Label ${rule.configuration.label} → assign @${rule.configuration.assignee} → notify Slack` : 'Record incoming event'}</Typography>
                 </Box>
-                <Stack direction="row" spacing={0.75} flexShrink={0}>
-                  <Button size="small" variant="outlined" startIcon={rule.enabled ? <PauseIcon /> : <PlayIcon />} disabled={workingRuleId !== null} onClick={() => toggleRule(rule)} sx={{ whiteSpace: 'nowrap', fontWeight: 700 }}>{rule.enabled ? 'Disable' : 'Enable'}</Button>
-                  <Button size="small" variant="contained" color="error" startIcon={<TrashIcon />} disabled={workingRuleId !== null} onClick={() => removeRule(rule)} sx={{ whiteSpace: 'nowrap', bgcolor: '#c62828', fontWeight: 700, boxShadow: 'none', '&:hover': { bgcolor: '#a91f1f', boxShadow: '0 4px 10px rgba(198, 40, 40, 0.22)' } }}>Delete</Button>
+                <Stack direction="row" spacing={0.75} alignItems="center" flexShrink={0} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+                  <Button size="small" variant="outlined" startIcon={rule.enabled ? <PauseIcon /> : <PlayIcon />} disabled={workingRuleId !== null} onClick={() => toggleRule(rule)} sx={{ flex: { xs: 1, sm: 'initial' }, height: 30, whiteSpace: 'nowrap', fontWeight: 700 }}>{rule.enabled ? 'Disable' : 'Enable'}</Button>
+                  <Button size="small" variant="contained" color="error" startIcon={<TrashIcon />} disabled={workingRuleId !== null} onClick={() => removeRule(rule)} sx={{ flex: { xs: 1, sm: 'initial' }, height: 30, whiteSpace: 'nowrap', bgcolor: '#c62828', fontWeight: 700, boxShadow: 'none', '&:hover': { bgcolor: '#a91f1f', boxShadow: '0 4px 10px rgba(198, 40, 40, 0.22)' } }}>Delete</Button>
                 </Stack>
               </Stack></Box>
             ))}
